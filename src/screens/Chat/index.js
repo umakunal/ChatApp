@@ -25,7 +25,7 @@ const Chat = ({route, navigation}) => {
         : user.id + '-' + 'n9g4m3PJfUZVxyCH4DBS';
     const querySnapShot = await firestore()
       .collection('chatroom')
-      .doc(user.id)
+      .doc(docID)
       .collection('messages')
       .orderBy('createdAt', 'desc')
       .get();
@@ -36,6 +36,7 @@ const Chat = ({route, navigation}) => {
         createdAt: docSnap.data().createdAt.toDate(),
       };
     });
+    console.log('All Messages', querySnapShot)
     setMessages(allMessage);
     // setMessages([
     //   {
