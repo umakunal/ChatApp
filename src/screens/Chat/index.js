@@ -3,7 +3,7 @@ import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {styles} from './styles';
 import {useNavigation} from '@react-navigation/native';
-import {GiftedChat} from 'react-native-gifted-chat';
+import {GiftedChat, Bubble, InputToolbar} from 'react-native-gifted-chat';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import colors from '../../assets/Theme/colors';
 import firestore from '@react-native-firebase/firestore';
@@ -16,7 +16,34 @@ const Chat = ({route, navigation}) => {
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    getAllMessages();
+    // getAllMessages();
+    const docID =
+      user.id > 'n9g4m3PJfUZVxyCH4DBS'
+        ? 'n9g4m3PJfUZVxyCH4DBS' + '-' + user.id
+        : user.id + '-' + 'n9g4m3PJfUZVxyCH4DBS';
+    const messageRef = firestore()
+      .collection('chatroom')
+      .doc(docID)
+      .collection('messages')
+      .orderBy('createdAt', 'desc');
+
+    messageRef.onSnapshot(querySnap => {
+      const allMessage = querySnap.docs.map(docSnap => {
+        const data = docSnap.data();
+        if (data.createdAt) {
+          return {
+            ...docSnap.data(),
+            createdAt: docSnap.data().createdAt.toDate(),
+          };
+        } else {
+          return {
+            ...docSnap.data(),
+            createdAt: new Date(),
+          };
+        }
+      });
+      setMessages(allMessage);
+    });
   }, []);
   const getAllMessages = async () => {
     const docID =
@@ -36,7 +63,7 @@ const Chat = ({route, navigation}) => {
         createdAt: docSnap.data().createdAt.toDate(),
       };
     });
-    console.log('All Messages', querySnapShot)
+    console.log('All Messages', querySnapShot);
     setMessages(allMessage);
     // setMessages([
     //   {
@@ -74,6 +101,33 @@ const Chat = ({route, navigation}) => {
       .add({...myMsg, createdAt: firestore.FieldValue.serverTimestamp()});
   };
 
+  const renderBubble = props => {
+    return (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          right: {
+            backgroundColor: colors.primary,
+          },
+          left: {
+            backgroundColor: colors.secondary,
+          },
+        }}
+      />
+    );
+  };
+
+  const renderInputToolbar = props => {
+    //Add the extra styles via containerStyle
+    return (
+      <InputToolbar
+        {...props}
+        textInputStyle={{color: colors.black}}
+        containerStyle={{borderTopWidth: 1.5, borderTopColor: '#333'}}
+      />
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -104,7 +158,9 @@ const Chat = ({route, navigation}) => {
         </View>
       </View>
       <GiftedChat
+        renderBubble={renderBubble}
         messages={messages}
+        renderInputToolbar={renderInputToolbar}
         onSend={messages => onSend(messages)}
         user={{
           _id: 'n9g4m3PJfUZVxyCH4DBS',
