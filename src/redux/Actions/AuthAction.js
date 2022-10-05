@@ -37,7 +37,7 @@ const registerUserError = error => ({
 });
 
 // export const loginUser = (dispatch, data, navigate) => {
-export const loginUser = async (data, navigate) => {
+export const loginUser = async (dispatch, data, navigate) => {
   try {
     dispatch(loginUserRequest());
     let userData;
@@ -58,21 +58,31 @@ export const loginUser = async (data, navigate) => {
   }
 };
 // export const registerUser = (dispatch, data, navigate) => {
-export const registerUser = (data, navigate) => {
+export const registerUser = async (dispatch, data, navigate) => {
   try {
     dispatch(registerUserRequest());
-    const result = auth().createUserWithEmailAndPassword(Email, Password);
+    let userData;
+    const result = await auth().createUserWithEmailAndPassword(
+      data.email,
+      data.password,
+    );
 
-    fireStore().collection('users').doc(result.user).set({
-      firsname: FirstName,
-      lastname: LastName,
-      email: Email,
-      password: Password,
+    console.log('firebase Data', data);
+
+    fireStore().collection('users').doc(result.user.uid).set({
+      firstname: data.firstname,
+      lastname: data.lastname,
+      email: result.user.email,
+      uid: result.user.uid,
     });
 
-    console.log('Firebase Auth Response', result);
-    dispatch(registerUserSuccess(result));
-    // navigate(NAVIGATION.home);
+    userData = {
+      firstname: data.firstname,
+      lastname: data.lastname,
+      email: result.user.email,
+      uid: result.user.uid,
+    };
+    dispatch(registerUserSuccess(userData));
   } catch (error) {
     dispatch(registerUserError(error));
     console.log('Error ocurred==>', error);

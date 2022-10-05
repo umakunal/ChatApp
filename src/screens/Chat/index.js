@@ -7,9 +7,12 @@ import {GiftedChat, Bubble, InputToolbar} from 'react-native-gifted-chat';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import colors from '../../assets/Theme/colors';
 import firestore from '@react-native-firebase/firestore';
+import {useSelector} from 'react-redux';
 
 // create a component
 const Chat = ({route, navigation}) => {
+  const authReducer = useSelector(({auth}) => auth);
+  const {userData} = authReducer;
   const {navigate} = useNavigation();
   const user = route.params.data;
   //   console.log('route.params', route.params);
@@ -18,9 +21,9 @@ const Chat = ({route, navigation}) => {
   useEffect(() => {
     // getAllMessages();
     const docID =
-      user.id > 'n9g4m3PJfUZVxyCH4DBS'
-        ? 'n9g4m3PJfUZVxyCH4DBS' + '-' + user.id
-        : user.id + '-' + 'n9g4m3PJfUZVxyCH4DBS';
+      user.id > userData.userId
+        ? userData.userId + '-' + user.id
+        : user.id + '-' + userData.userId;
     const messageRef = firestore()
       .collection('chatroom')
       .doc(docID)
@@ -47,9 +50,9 @@ const Chat = ({route, navigation}) => {
   }, []);
   const getAllMessages = async () => {
     const docID =
-      user.id > 'n9g4m3PJfUZVxyCH4DBS'
-        ? 'n9g4m3PJfUZVxyCH4DBS' + '-' + user.id
-        : user.id + '-' + 'n9g4m3PJfUZVxyCH4DBS';
+      user.id > userData.userId
+        ? userData.userId + '-' + user.id
+        : user.id + '-' + userData.userId;
     const querySnapShot = await firestore()
       .collection('chatroom')
       .doc(docID)
@@ -67,7 +70,7 @@ const Chat = ({route, navigation}) => {
     setMessages(allMessage);
     // setMessages([
     //   {
-    //     _id: 'n9g4m3PJfUZVxyCH4DBS',
+    //     _id: userData.userId,
     //     text: 'Hello developer',
     //     createdAt: new Date(),
     //     user: {
@@ -85,15 +88,15 @@ const Chat = ({route, navigation}) => {
     const msg = messagesArray[0];
     const myMsg = {
       ...msg,
-      sentBy: 'n9g4m3PJfUZVxyCH4DBS',
+      sentBy: userData.userId,
       sentTo: user.id,
       createdAt: new Date(),
     };
     setMessages(previousMessages => GiftedChat.append(previousMessages, myMsg));
     const docID =
-      user.id > 'n9g4m3PJfUZVxyCH4DBS'
-        ? 'n9g4m3PJfUZVxyCH4DBS' + '-' + user.id
-        : user.id + '-' + 'n9g4m3PJfUZVxyCH4DBS';
+      user.id > userData.userId
+        ? userData.userId + '-' + user.id
+        : user.id + '-' + userData.userId;
     firestore()
       .collection('chatroom')
       .doc(docID)
@@ -163,7 +166,7 @@ const Chat = ({route, navigation}) => {
         renderInputToolbar={renderInputToolbar}
         onSend={messages => onSend(messages)}
         user={{
-          _id: 'n9g4m3PJfUZVxyCH4DBS',
+          _id: userData.userId,
         }}
       />
     </View>

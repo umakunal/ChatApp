@@ -15,37 +15,28 @@ import {styles} from './styles';
 import firestore from '@react-native-firebase/firestore';
 import {useNavigation} from '@react-navigation/native';
 import {NAVIGATION} from '../../constants/navigation';
-// create a component
+import {useSelector} from 'react-redux';
+
 const Home = () => {
+  const authReducer = useSelector(({auth}) => auth);
+  const {userData} = authReducer;
   const {navigate} = useNavigation();
   const [AllUser, setAllUser] = useState([]);
   const [loading, setLoading] = useState([]);
 
   useEffect(() => {
+    console.log('userData==>', userData);
     getDatabase();
   }, []);
   const getDatabase = async () => {
     try {
       setLoading(true);
-      const usersCollection = await firestore().collection('users').get();
-      const allUsers = [];
-      usersCollection.docs.forEach(data => {
-        let userData = data._data;
-        // console.log('All userData', userData);
-        allUsers.push({
-          id: data.id,
-          firstname: userData.firsname,
-          lastname: userData.lastname,
-          email: userData.email,
-        });
-      });
-      let filteredArray = allUsers.filter(
-        item => item.id !== 'n9g4m3PJfUZVxyCH4DBS',
-      );
-      // console.log('usersCollection', usersCollection);
-      console.log('allUsers', allUsers);
-      console.log('filteredArray', filteredArray);
-      setAllUser(filteredArray);
+      const usersCollection = await firestore()
+        .collection('users')
+        .where('uid', '!=', userData.userId)
+        .get();
+      const allUsers = usersCollection.docs.map(docSnap => docSnap.data());
+      setAllUser(allUsers);
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -97,3 +88,32 @@ const Home = () => {
 
 //make this component available to the app
 export default Home;
+
+// const getDatabase = async () => {
+//   try {
+//     setLoading(true);
+//     const usersCollection = await firestore().collection('users').get();
+//     const allUsers = [];
+//     usersCollection.docs.forEach(data => {
+//       let userData = data._data;
+//       console.log('All userData', userData);
+//       allUsers.push({
+//         id: data.id,
+//         firstname: userData.firstname,
+//         lastname: userData.lastname,
+//         email: userData.email,
+//       });
+//     });
+//     let filteredArray = allUsers.filter(
+//       item => item.id !== userData.uid,
+//     );
+//     // console.log('usersCollection', usersCollection);
+//     console.log('allUsers', allUsers);
+//     console.log('filteredArray', filteredArray);
+//     setAllUser(filteredArray);
+//     setLoading(false);
+//   } catch (error) {
+//     setLoading(false);
+//     console.log(error);
+//   }
+// };

@@ -19,15 +19,20 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import colors from '../../assets/Theme/colors';
 import auth from '@react-native-firebase/auth';
 import fireStore from '@react-native-firebase/firestore';
+import {useDispatch, useSelector} from 'react-redux';
+import {registerUser} from '../../redux/Actions/AuthAction';
 
 // create a component
 const SignUp = () => {
+  const dispatch = useDispatch();
+  const authReducer = useSelector(({auth}) => auth);
+  const {loading} = authReducer;
   const [FirstName, setFirstName] = useState('');
   const [LastName, setLastName] = useState('');
   const [Email, setEmail] = useState('');
   const [Password, setPassword] = useState('');
   const [isSecureEntry, setIsSecureEntry] = useState(true);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const {navigate} = useNavigation();
   const onSubmit = async () => {
     if (
@@ -39,25 +44,36 @@ const SignUp = () => {
       Alert.alert('Please add all fields.');
       return;
     } else {
-      setLoading(true);
-      try {
-        const result = auth().createUserWithEmailAndPassword(Email, Password);
+      const data = {
+        firstname: FirstName,
+        lastname: LastName,
+        email: Email,
+        password: Password,
+      };
+      registerUser(dispatch, data, navigate);
+      // setLoading(true);
+      // try {
+      //   const result = auth().createUserWithEmailAndPassword(Email, Password);
 
-        await fireStore().collection('users').doc(result.user).set({
-          firsname: FirstName,
-          lastname: LastName,
-          email: Email,
-          password: Password,
-        });
-        setLoading(false);
-        // console.log('Firebase Auth Response', result);
-        result.then(response => {
-          console.log('Auth Response', response.user._user);
-        });
-      } catch (error) {
-        setLoading(false);
-        console.log('Error ocurred==>', error);
-      }
+      //   await fireStore()
+      //     .collection('users')
+      //     .doc(result.user)
+      //     .set({
+      //       uid: (await result).user.uid,
+      //       firsname: FirstName,
+      //       lastname: LastName,
+      //       email: Email,
+      //       password: Password,
+      //     });
+      //   setLoading(false);
+      //   // console.log('Firebase Auth Response', result);
+      //   result.then(response => {
+      //     console.log('Auth Response', response.user._user);
+      //   });
+      // } catch (error) {
+      //   setLoading(false);
+      //   console.log('Error ocurred==>', error);
+      // }
     }
   };
 

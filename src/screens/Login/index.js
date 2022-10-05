@@ -39,7 +39,7 @@ const Login = () => {
           email: Email,
           password: Password,
         };
-        dispatch(loginUser(data, navigate));
+        loginUser(dispatch, data, navigate);
       } catch (error) {
         console.log('Error ocurred', error);
       }

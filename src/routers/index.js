@@ -9,11 +9,9 @@ const MainRoute = () => {
   const {isLoggedIn} = authReducer;
   return (
     <NavigationContainer>
-     <UserRoutes />
+      {isLoggedIn ? <UserRoutes /> : <AuthRoutes />}
     </NavigationContainer>
   );
 };
 
 export default MainRoute;
-
-// {isLoggedIn ? <UserRoutes /> : <AuthRoutes />}
