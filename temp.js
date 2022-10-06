@@ -1,104 +1,180 @@
+//import liraries
+import React, {useState, useEffect} from 'react';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {styles} from './styles';
 import {useNavigation} from '@react-navigation/native';
-import React, {useState} from 'react';
-import {Image, Text, View} from 'react-native';
-import {TouchableOpacity} from 'react-native-gesture-handler';
-import Container from '../../components/common/Container';
-import CustomButton from '../../components/common/CustomButton';
-import Input from '../../components/common/Input';
-import {REGISTER} from '../../constants/routeNames';
-import Message from '../common/Message';
-import styles from './styles';
+import {GiftedChat, Bubble, InputToolbar} from 'react-native-gifted-chat';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import colors from '../../assets/Theme/colors';
+import firestore from '@react-native-firebase/firestore';
+import {useSelector} from 'react-redux';
 
-const LoginComponent = ({
-  error,
-  form,
-  justSignedUp,
-  onChange,
-  loading,
-  onSubmit,
-}) => {
+// create a component
+const Chat = ({route, navigation}) => {
+  const authReducer = useSelector(({auth}) => auth);
+  const {userData} = authReducer;
   const {navigate} = useNavigation();
-  const [isSecureEntry, setIsSecureEntry] = useState(true);
-  return (
-    <Container>
-      <Image
-        height={70}
-        width={70}
-        source={require('../../assets/images/logo.png')}
-        style={styles.logoImage}
+  const user = route.params.data;
+  //   console.log('route.params', route.params);
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    // getAllMessages();
+    const docID =
+      user.id > userData.userId
+        ? userData.userId + '-' + user.id
+        : user.id + '-' + userData.userId;
+    const messageRef = firestore()
+      .collection('chatroom')
+      .doc(docID)
+      .collection('messages')
+      .orderBy('createdAt', 'desc');
+
+    messageRef.onSnapshot(querySnap => {
+      const allMessage = querySnap.docs.map(docSnap => {
+        const data = docSnap.data();
+        if (data.createdAt) {
+          return {
+            ...docSnap.data(),
+            createdAt: docSnap.data().createdAt.toDate(),
+          };
+        } else {
+          return {
+            ...docSnap.data(),
+            createdAt: new Date(),
+          };
+        }
+      });
+      setMessages(allMessage);
+    });
+  }, []);
+  const getAllMessages = async () => {
+    const docID =
+      user.id > userData.userId
+        ? userData.userId + '-' + user.id
+        : user.id + '-' + userData.userId;
+    const querySnapShot = await firestore()
+      .collection('chatroom')
+      .doc(docID)
+      .collection('messages')
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    const allMessage = querySnapShot.docs.map(docSnap => {
+      return {
+        ...docSnap.data(),
+        createdAt: docSnap.data().createdAt.toDate(),
+      };
+    });
+    console.log('All Messages', querySnapShot);
+    setMessages(allMessage);
+    // setMessages([
+    //   {
+    //     _id: userData.userId,
+    //     text: 'Hello developer',
+    //     createdAt: new Date(),
+    //     user: {
+    //       _id: user.id,
+    //       name: 'React Native',
+    //       avatar: `${user.firstname.substring(0, 1)}${user.lastname.substring(
+    //         0,
+    //         1,
+    //       )}`,
+    //     },
+    //   },
+    // ]);
+  };
+  const onSend = messagesArray => {
+    const msg = messagesArray[0];
+    const myMsg = {
+      ...msg,
+      sentBy: userData.userId,
+      sentTo: user.id,
+      createdAt: new Date(),
+    };
+    setMessages(previousMessages => GiftedChat.append(previousMessages, myMsg));
+    const docID =
+      user.id > userData.userId
+        ? userData.userId + '-' + user.id
+        : user.id + '-' + userData.userId;
+    firestore()
+      .collection('chatroom')
+      .doc(docID)
+      .collection('messages')
+      .add({...myMsg, createdAt: firestore.FieldValue.serverTimestamp()});
+  };
+
+  const renderBubble = props => {
+    return (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          right: {
+            backgroundColor: colors.primary,
+          },
+          left: {
+            backgroundColor: colors.secondary,
+          },
+        }}
       />
+    );
+  };
 
-      <View>
-        <Text style={styles.title}>Welcome to RNContacts</Text>
-        <Text style={styles.subTitle}>Please login here</Text>
+  const renderInputToolbar = props => {
+    //Add the extra styles via containerStyle
+    return (
+      <InputToolbar
+        {...props}
+        textInputStyle={{color: colors.black}}
+        containerStyle={{borderTopWidth: 1.5, borderTopColor: '#333'}}
+      />
+    );
+  };
 
-        <View style={styles.form}>
-          {justSignedUp && (
-            <Message
-              onDismiss={() => {}}
-              success
-              message="Account created successfully"
-            />
-          )}
-          {error && !error.error && (
-            <Message
-              onDismiss={() => {}}
-              danger
-              message="invalid credentials"
-            />
-          )}
-
-          {error?.error && <Message danger onDismiss message={error?.error} />}
-
-          <Input
-            label="Username"
-            iconPosition="right"
-            placeholder="Enter Username"
-            value={form.userName || null}
-            onChangeText={(value) => {
-              onChange({name: 'userName', value});
-            }}
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.goBack();
+          }}>
+          <Ionicons
+            name="chevron-back"
+            size={25}
+            color={colors.primary}
+            style={{paddingHorizontal: 10}}
           />
-
-          <Input
-            label="Password"
-            placeholder="Enter Password"
-            secureTextEntry={isSecureEntry}
-            icon={
-              <TouchableOpacity
-                onPress={() => {
-                  setIsSecureEntry((prev) => !prev);
-                }}>
-                <Text>{isSecureEntry ? 'Show' : 'Hide'}</Text>
-              </TouchableOpacity>
-            }
-            iconPosition="right"
-            onChangeText={(value) => {
-              onChange({name: 'password', value});
-            }}
-          />
-
-          <CustomButton
-            disabled={loading}
-            onPress={onSubmit}
-            loading={loading}
-            primary
-            title="Submit"
-          />
-
-          <View style={styles.createSection}>
-            <Text style={styles.infoText}>Need a new account?</Text>
-            <TouchableOpacity
-              onPress={() => {
-                navigate(REGISTER);
-              }}>
-              <Text style={styles.linkBtn}>Register</Text>
-            </TouchableOpacity>
+        </TouchableOpacity>
+        <View style={styles.innerRow}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarTxt}>{`${user.firstname.substring(
+              0,
+              1,
+            )}${user.lastname.substring(0, 1)}`}</Text>
+          </View>
+          <View>
+            <Text style={styles.name}>
+              {user.firstname} {user.lastname}
+            </Text>
+            <Text style={styles.email}>{user.email}</Text>
           </View>
         </View>
       </View>
-    </Container>
+      <GiftedChat
+        renderBubble={renderBubble}
+        messages={messages}
+        renderInputToolbar={renderInputToolbar}
+        onSend={messages => onSend(messages)}
+        user={{
+          _id: userData.userId,
+        }}
+      />
+    </View>
   );
 };
 
-export default LoginComponent;
+//make this component available to the app
+export default Chat;
+
+
+// npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/

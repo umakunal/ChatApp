@@ -15,15 +15,17 @@ const Chat = ({route, navigation}) => {
   const {userData} = authReducer;
   const {navigate} = useNavigation();
   const user = route.params.data;
-  //   console.log('route.params', route.params);
+
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
+    // console.log('route.params', route.params);
+    // console.log('redux userData', userData);
     // getAllMessages();
     const docID =
-      user.id > userData.userId
-        ? userData.userId + '-' + user.id
-        : user.id + '-' + userData.userId;
+      user.uid > userData.userId
+        ? userData.userId + '-' + user.uid
+        : user.uid + '-' + userData.userId;
     const messageRef = firestore()
       .collection('chatroom')
       .doc(docID)
@@ -31,7 +33,7 @@ const Chat = ({route, navigation}) => {
       .orderBy('createdAt', 'desc');
 
     messageRef.onSnapshot(querySnap => {
-      const allMessage = querySnap.docs.map(docSnap => {
+      const allMessages = querySnap.docs.map(docSnap => {
         const data = docSnap.data();
         if (data.createdAt) {
           return {
@@ -45,58 +47,46 @@ const Chat = ({route, navigation}) => {
           };
         }
       });
-      setMessages(allMessage);
+      console.log('allMessages==>', allMessages);
+      setMessages(allMessages);
     });
   }, []);
-  const getAllMessages = async () => {
-    const docID =
-      user.id > userData.userId
-        ? userData.userId + '-' + user.id
-        : user.id + '-' + userData.userId;
-    const querySnapShot = await firestore()
-      .collection('chatroom')
-      .doc(docID)
-      .collection('messages')
-      .orderBy('createdAt', 'desc')
-      .get();
+  // const getAllMessages = async () => {
+  //   const docID =
+  //     user.uid > userData.userId
+  //       ? userData.userId + '-' + user.uid
+  //       : user.uid + '-' + userData.userId;
+  //   const querySnap = await firestore()
+  //     .collection('chatroom')
+  //     .doc(docID)
+  //     .collection('messages')
+  //     .orderBy('createdAt', 'desc')
+  //     .get();
 
-    const allMessage = querySnapShot.docs.map(docSnap => {
-      return {
-        ...docSnap.data(),
-        createdAt: docSnap.data().createdAt.toDate(),
-      };
-    });
-    console.log('All Messages', querySnapShot);
-    setMessages(allMessage);
-    // setMessages([
-    //   {
-    //     _id: userData.userId,
-    //     text: 'Hello developer',
-    //     createdAt: new Date(),
-    //     user: {
-    //       _id: user.id,
-    //       name: 'React Native',
-    //       avatar: `${user.firstname.substring(0, 1)}${user.lastname.substring(
-    //         0,
-    //         1,
-    //       )}`,
-    //     },
-    //   },
-    // ]);
-  };
+  //   const allMessages = querySnap.docs.map(docSnap => {
+  //     return {
+  //       ...docSnap.data(),
+  //       createdAt: docSnap.data().createdAt.toDate(),
+  //     };
+  //   });
+  //   console.log('allMessages==>', allMessages);
+  //   setMessages(allMessages);
+  // };
   const onSend = messagesArray => {
     const msg = messagesArray[0];
+    console.log('messageObj', msg);
     const myMsg = {
       ...msg,
       sentBy: userData.userId,
-      sentTo: user.id,
+      sentTo: user.uid,
       createdAt: new Date(),
     };
+    console.log('myMsg', myMsg);
     setMessages(previousMessages => GiftedChat.append(previousMessages, myMsg));
     const docID =
-      user.id > userData.userId
-        ? userData.userId + '-' + user.id
-        : user.id + '-' + userData.userId;
+      user.uid > userData.userId
+        ? userData.userId + '-' + user.uid
+        : user.uid + '-' + userData.userId;
     firestore()
       .collection('chatroom')
       .doc(docID)
@@ -113,7 +103,8 @@ const Chat = ({route, navigation}) => {
             backgroundColor: colors.primary,
           },
           left: {
-            backgroundColor: colors.secondary,
+            backgroundColor: colors.secondaryFade,
+            color: colors.white,
           },
         }}
       />
@@ -125,8 +116,15 @@ const Chat = ({route, navigation}) => {
     return (
       <InputToolbar
         {...props}
-        textInputStyle={{color: colors.black}}
-        containerStyle={{borderTopWidth: 1.5, borderTopColor: '#333'}}
+        textInputStyle={{
+          color: colors.black,
+          // backgroundColor: colors.white,
+          // borderRadius: 10,
+          // paddingHorizontal: 12,
+          // borderWidth: 1,
+          // borderColor: colors.grey,
+        }}
+        containerStyle={{borderTopWidth: 1, borderTopColor: colors.grey}}
       />
     );
   };
